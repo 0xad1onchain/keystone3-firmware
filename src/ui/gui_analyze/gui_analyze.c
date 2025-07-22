@@ -1078,15 +1078,17 @@ void GuiAnalyzeViewInit(lv_obj_t *parent)
     lv_obj_t *line = (lv_obj_t *)GuiCreateLine(g_imgCont, points, 2);
     lv_obj_align(line, LV_ALIGN_TOP_LEFT, 0, 64);
     uint16_t tabWidth = 0;
+    int tabCount = 0;
     for (int i = 0; i < GUI_ANALYZE_TABVIEW_CNT; i++) {
-        if (g_analyzeTabview.obj[i] == NULL) {
-            if (i <= 1) {
-                tabWidth = 440;
-            } else {
-                tabWidth = 300;
-            }
-            break;
+        if (g_analyzeTabview.obj[i] != NULL) {
+            tabCount++;
         }
+    }
+    
+    if (tabCount <= 2) {
+        tabWidth = 440;
+    } else {
+        tabWidth = 400;
     }
 
     for (int i = 0; i < GUI_ANALYZE_TABVIEW_CNT; i++) {

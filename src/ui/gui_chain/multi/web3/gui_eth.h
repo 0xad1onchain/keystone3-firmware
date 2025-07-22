@@ -36,6 +36,8 @@ void GetEthInputData(void *indata, void *param, uint32_t maxLen);
 void GetEthNonce(void *indata, void *param, uint32_t maxLen);
 int GetEthInputDataLen(void *param);
 bool GetEthTypeDataHashExist(void *indata, void *param);
+bool GetEthTypeDataHashNotExist(void *indata, void *param);
+bool GetEthSafeTxSigningEnabled(void *indata, void *param);
 bool GetEthContractFromInternal(char *address, char *inputData);
 bool GetEthTypeDataChainExist(void *indata, void *param);
 bool GetEthTypeDataVersionExist(void *indata, void *param);
@@ -76,6 +78,21 @@ void GetEthTypedDataPrimayType(void *indata, void *param, uint32_t maxLen);
 void GetEthTypedDataMessage(void *indata, void *param, uint32_t maxLen);
 int GetEthTypedDataMessageLen(void *param);
 void GetEthTypedDataFrom(void *indata, void *param, uint32_t maxLen);
+void GetEthSafeTxTo(void *indata, void *param, uint32_t maxLen);
+void GetEthSafeTxValue(void *indata, void *param, uint32_t maxLen);
+void GetEthSafeTxData(void *indata, void *param, uint32_t maxLen);
+int GetEthSafeTxDataLen(void *param);
+
+// Safe Transaction EIP-712 functions
+bool GetEthSafeTxExist(void *indata, void *param);
+void GetEthSafeTxTo(void *indata, void *param, uint32_t maxLen);
+void GetEthSafeTxData(void *indata, void *param, uint32_t maxLen);
+int GetEthSafeTxDataLen(void *param);
+void GetEthSafeTxOperation(void *indata, void *param, uint32_t maxLen);
+bool GetEthSafeTxIsMulticall(void *indata, void *param);
+void GetEthSafeTxMulticallDetails(void *indata, void *param, uint32_t maxLen);
+
+
 void EthContractLearnMore(lv_event_t *e);
 void EthContractCheckRawData(lv_event_t *e);
 

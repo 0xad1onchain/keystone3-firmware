@@ -776,21 +776,20 @@ void *GuiGetEthTypeData(void)
     do {
         result = eth_check(data, mfp, sizeof(mfp));
         CHECK_CHAIN_BREAK(result);
+        
         PtrT_TransactionParseResult_DisplayETHTypedData parseResult = eth_parse_typed_data(data, ethXpub);
-        cJSON *json = cJSON_Parse(parseResult->data->message);
-        cJSON *operation = cJSON_GetObjectItem(json, "operation");
-        if (operation) {
-            uint32_t operationValue;
-            sscanf(operation->valuestring, "%d", &operationValue);
-            g_isOperation = operationValue == 1;
-        }
-        cJSON_Delete(json);
-        CHECK_CHAIN_BREAK(parseResult);
         g_parseResult = (void *)parseResult;
-        UpdatePermitFlag(parseResult->data->primary_type);
+        if (parseResult->data != NULL && parseResult->data->primary_type != NULL) {
+            UpdatePermitFlag(parseResult->data->primary_type);
+        }
     } while (0);
-    free_TransactionCheckResult(result);
-    free_ptr_string(rootPath);
+    
+    if (result != NULL) {
+        free_TransactionCheckResult(result);
+    }
+    if (rootPath != NULL) {
+        free_ptr_string(rootPath);
+    }
     return g_parseResult;
 }
 
@@ -803,6 +802,8 @@ void GetEthTypedDataDomianName(void *indata, void *param, uint32_t maxLen)
         strcpy_s((char *)indata, maxLen, "");
     }
 }
+
+
 
 void _colorfulHash(char *hash, char *indata, uint32_t maxLen)
 {
@@ -844,10 +845,27 @@ void GetEthTypedDataDomainHash(void *indata, void *param, uint32_t maxLen)
 bool GetEthTypeDataHashExist(void *indata, void *param)
 {
     DisplayETHTypedData *message = (DisplayETHTypedData *)param;
-    if (strncmp(message->primary_type, "SafeTx", 6) == 0) {
-        return true;
+    if (message == NULL) {
+        return false;
     }
-    return false;
+    if (message->primary_type == NULL) {
+        return false;
+    }
+    bool result = (strncmp(message->primary_type, "SafeTx", 6) == 0);
+    return result;
+}
+
+bool GetEthTypeDataHashNotExist(void *indata, void *param)
+{
+    return !GetEthTypeDataHashExist(indata, param);
+}
+
+bool GetEthSafeTxSigningEnabled(void *indata, void *param)
+{
+    // This function determines if SafeTx signing should be enabled
+    // For now, return the same as GetEthTypeDataHashExist since SafeTx signing
+    // is enabled when we have a SafeTx transaction type
+    return GetEthTypeDataHashExist(indata, param);
 }
 
 bool GetEthTypeDataChainExist(void *indata, void *param)
@@ -945,16 +963,19 @@ void GetEthTypedDataPrimayType(void *indata, void *param, uint32_t maxLen)
 void GetEthTypedDataMessage(void *indata, void *param, uint32_t maxLen)
 {
     DisplayETHTypedData *message = (DisplayETHTypedData *)param;
-    if (message->message != NULL) {
-        snprintf((char *)indata, maxLen, "%s", message->message);
-    } else {
-        strcpy_s((char *)indata, maxLen, "");
+    if (message == NULL || message->message == NULL) {
+        strcpy_s((char *)indata, maxLen, "{}");
+        return;
     }
+    snprintf((char *)indata, maxLen, "%s", message->message);
 }
 
 int GetEthTypedDataMessageLen(void *param)
 {
     DisplayETHTypedData *message = (DisplayETHTypedData *)param;
+    if (message == NULL || message->message == NULL) {
+        return 3; // "0x" + null terminator
+    }
     return strlen(message->message) + 3;
 }
 
@@ -966,6 +987,57 @@ void GetEthTypedDataFrom(void *indata, void *param, uint32_t maxLen)
     } else {
         strcpy_s((char *)indata, maxLen, "");
     }
+}
+
+void GetEthSafeTxTo(void *indata, void *param, uint32_t maxLen)
+{
+    DisplayETHTypedData *message = (DisplayETHTypedData *)param;
+    void *data = g_isMulti ? g_urMultiResult->data : g_urResult->data;
+    char *safeTxTo = eth_get_safe_tx_to(data);
+    if (safeTxTo != NULL) {
+        strcpy_s((char *)indata, maxLen, safeTxTo);
+        free_ptr_string(safeTxTo);
+    } else {
+        strcpy_s((char *)indata, maxLen, "N/A");
+    }
+}
+
+void GetEthSafeTxValue(void *indata, void *param, uint32_t maxLen)
+{
+    DisplayETHTypedData *message = (DisplayETHTypedData *)param;
+    void *data = g_isMulti ? g_urMultiResult->data : g_urResult->data;
+    char *safeTxValue = eth_get_safe_tx_value(data);
+    if (safeTxValue != NULL) {
+        strcpy_s((char *)indata, maxLen, safeTxValue);
+        free_ptr_string(safeTxValue);
+    } else {
+        strcpy_s((char *)indata, maxLen, "0 ETH");
+    }
+}
+
+void GetEthSafeTxData(void *indata, void *param, uint32_t maxLen)
+{
+    DisplayETHTypedData *message = (DisplayETHTypedData *)param;
+    void *data = g_isMulti ? g_urMultiResult->data : g_urResult->data;
+    char *safeTxData = eth_get_safe_tx_data(data);
+    if (safeTxData != NULL) {
+        strcpy_s((char *)indata, maxLen, safeTxData);
+        free_ptr_string(safeTxData);
+    } else {
+        strcpy_s((char *)indata, maxLen, "0x");
+    }
+}
+
+int GetEthSafeTxDataLen(void *param)
+{
+    void *data = g_isMulti ? g_urMultiResult->data : g_urResult->data;
+    char *safeTxData = eth_get_safe_tx_data(data);
+    if (safeTxData != NULL) {
+        int len = strlen(safeTxData) + 3;
+        free_ptr_string(safeTxData);
+        return len;
+    }
+    return 3; // "0x" + null terminator
 }
 
 void *GuiGetEthPersonalMessage(void)
@@ -1694,4 +1766,10 @@ void FreeEthMemory(void)
     CHECK_FREE_PARSE_RESULT(g_parseResult);
     FreeContractData();
     GUI_DEL_OBJ(g_contractRawDataHintbox);
+}
+
+bool GetEthSafeTxExist(void *indata, void *param)
+{
+    DisplayETHTypedData *message = (DisplayETHTypedData *)param;
+    return (strncmp(message->primary_type, "SafeTx", 6) == 0);
 }

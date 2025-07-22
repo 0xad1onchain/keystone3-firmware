@@ -281,6 +281,78 @@ impl TypedData {
         let transaction_hash = keccak256(&transaction_data);
         format!("0x{}", hex::encode(transaction_hash))
     }
+
+    pub fn get_safe_tx_to(&self) -> String {
+        if self.primary_type != "SafeTx" {
+            return "".to_string();
+        }
+
+        match serde_json::from_str::<Value>(&self.message) {
+            Ok(message) => message["to"].as_str().unwrap_or_default().to_string(),
+            Err(_) => "".to_string(),
+        }
+    }
+
+    pub fn get_safe_tx_data(&self) -> String {
+        if self.primary_type != "SafeTx" {
+            return "".to_string();
+        }
+
+        match serde_json::from_str::<Value>(&self.message) {
+            Ok(message) => message["data"].as_str().unwrap_or_default().to_string(),
+            Err(_) => "".to_string(),
+        }
+    }
+
+    pub fn get_safe_tx_value(&self) -> String {
+        if self.primary_type != "SafeTx" {
+            return "0".to_string();
+        }
+
+        match serde_json::from_str::<Value>(&self.message) {
+            Ok(message) => {
+                if let Some(value_str) = message["value"].as_str() {
+                    // Convert wei to ETH for display
+                    if let Ok(wei) = value_str.parse::<u128>() {
+                        let eth = wei as f64 / 1e18;
+                        return format!("{:.6} ETH", eth);
+                    }
+                }
+                "0 ETH".to_string()
+            }
+            Err(_) => "0 ETH".to_string(),
+        }
+    }
+
+    pub fn get_safe_tx_operation(&self) -> u8 {
+        if self.primary_type != "SafeTx" {
+            return 0;
+        }
+
+        match serde_json::from_str::<Value>(&self.message) {
+            Ok(message) => {
+                if let Some(op_str) = message["operation"].as_str() {
+                    op_str.parse::<u8>().unwrap_or(0)
+                } else {
+                    message["operation"].as_u64().unwrap_or(0) as u8
+                }
+            }
+            Err(_) => 0,
+        }
+    }
+
+    pub fn is_safe_multicall(&self) -> bool {
+        if self.primary_type != "SafeTx" {
+            return false;
+        }
+
+        let data = self.get_safe_tx_data();
+        let data_trimmed = data.trim_start_matches("0x");
+
+        // Basic multicall detection for future use
+        data_trimmed.starts_with("8d80ff0a") || // Safe's multiSend
+        data_trimmed.starts_with("ac9650d8") // Uniswap multicall
+    }
 }
 
 #[cfg(test)]

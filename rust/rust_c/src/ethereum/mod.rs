@@ -749,6 +749,74 @@ pub extern "C" fn eth_parse_erc20_approval(
     .c_ptr()
 }
 
+#[no_mangle]
+pub extern "C" fn eth_get_safe_tx_to(ptr: PtrUR) -> PtrString {
+    let crypto_eth = extract_ptr_with_type!(ptr, EthSignRequest);
+    // Use a dummy public key since we don't need actual verification for data extraction
+    let dummy_key = match bitcoin::secp256k1::PublicKey::from_slice(&[
+        0x02, 0x9b, 0xf4, 0x9f, 0xa8, 0xa8, 0xe8, 0x6b, 0xd6, 0x80, 0x29, 0xaf, 0x9b, 0xda, 0x57,
+        0x92, 0xea, 0x75, 0xa5, 0x07, 0x28, 0x6a, 0x7d, 0xc3, 0x8c, 0xb3, 0x76, 0xc0, 0xd4, 0x43,
+        0x64, 0x6a, 0xf0,
+    ]) {
+        Ok(key) => key,
+        Err(_) => {
+            return convert_c_char("".to_string());
+        }
+    };
+
+    match parse_typed_data_message(crypto_eth.get_sign_data(), dummy_key) {
+        Ok(typed_data) => {
+            let to = typed_data.get_safe_tx_to();
+            convert_c_char(to)
+        }
+        Err(_) => convert_c_char("".to_string()),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn eth_get_safe_tx_value(ptr: PtrUR) -> PtrString {
+    let crypto_eth = extract_ptr_with_type!(ptr, EthSignRequest);
+    // Use a dummy public key since we don't need actual verification for data extraction
+    let dummy_key = match bitcoin::secp256k1::PublicKey::from_slice(&[
+        0x02, 0x9b, 0xf4, 0x9f, 0xa8, 0xa8, 0xe8, 0x6b, 0xd6, 0x80, 0x29, 0xaf, 0x9b, 0xda, 0x57,
+        0x92, 0xea, 0x75, 0xa5, 0x07, 0x28, 0x6a, 0x7d, 0xc3, 0x8c, 0xb3, 0x76, 0xc0, 0xd4, 0x43,
+        0x64, 0x6a, 0xf0,
+    ]) {
+        Ok(key) => key,
+        Err(_) => return convert_c_char("0 ETH".to_string()),
+    };
+
+    match parse_typed_data_message(crypto_eth.get_sign_data(), dummy_key) {
+        Ok(typed_data) => {
+            let value = typed_data.get_safe_tx_value();
+            convert_c_char(value)
+        }
+        Err(_) => convert_c_char("0 ETH".to_string()),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn eth_get_safe_tx_data(ptr: PtrUR) -> PtrString {
+    let crypto_eth = extract_ptr_with_type!(ptr, EthSignRequest);
+    // Use a dummy public key since we don't need actual verification for data extraction
+    let dummy_key = match bitcoin::secp256k1::PublicKey::from_slice(&[
+        0x02, 0x9b, 0xf4, 0x9f, 0xa8, 0xa8, 0xe8, 0x6b, 0xd6, 0x80, 0x29, 0xaf, 0x9b, 0xda, 0x57,
+        0x92, 0xea, 0x75, 0xa5, 0x07, 0x28, 0x6a, 0x7d, 0xc3, 0x8c, 0xb3, 0x76, 0xc0, 0xd4, 0x43,
+        0x64, 0x6a, 0xf0,
+    ]) {
+        Ok(key) => key,
+        Err(_) => return convert_c_char("0x".to_string()),
+    };
+
+    match parse_typed_data_message(crypto_eth.get_sign_data(), dummy_key) {
+        Ok(typed_data) => {
+            let data = typed_data.get_safe_tx_data();
+            convert_c_char(data)
+        }
+        Err(_) => convert_c_char("0x".to_string()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     extern crate std;

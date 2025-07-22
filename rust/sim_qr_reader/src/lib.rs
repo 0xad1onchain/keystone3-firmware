@@ -2,6 +2,7 @@ use anyhow::Result;
 use image::DynamicImage;
 use quircs::{Code, Quirc};
 use screenshots::Screen;
+use std::panic::AssertUnwindSafe;
 use std::thread;
 use std::time::Duration;
 
@@ -71,11 +72,30 @@ where
                 None => screen.capture()?,
             };
             let dynamic_image = DynamicImage::ImageRgba8(image);
-            let mut codes = decoder.identify(
-                dynamic_image.width() as usize,
-                dynamic_image.height() as usize,
-                &dynamic_image.to_luma8(),
-            );
+            
+            // Add safety checks for image dimensions
+            let width = dynamic_image.width() as usize;
+            let height = dynamic_image.height() as usize;
+            if width == 0 || height == 0 || width > 10000 || height > 10000 {
+                return Err(anyhow::anyhow!("Invalid image dimensions: {}x{}", width, height));
+            }
+            
+            let luma_image = dynamic_image.to_luma8();
+            if luma_image.len() != width * height {
+                return Err(anyhow::anyhow!("Image data length mismatch"));
+            }
+            
+            // Try to identify QR codes, but handle potential panics gracefully
+            let mut codes = match std::panic::catch_unwind(AssertUnwindSafe(|| {
+                let result = decoder.identify(width, height, &luma_image);
+                let codes: Vec<_> = result.collect();
+                codes
+            })) {
+                Ok(codes) => codes.into_iter(),
+                Err(_) => {
+                    return Err(anyhow::anyhow!("QR decoder panicked, skipping frame"));
+                }
+            };
 
             if let Some(Ok(code)) = codes.next() {
                 let decoded = code.decode()?;

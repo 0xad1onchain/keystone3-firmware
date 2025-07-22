@@ -305,6 +305,10 @@ pub struct DisplayETHTypedData {
     domain_hash: PtrString,
     message_hash: PtrString,
     safe_tx_hash: PtrString,
+    safe_tx_to: PtrString,
+    safe_tx_data: PtrString,
+    safe_tx_operation: u8,
+    is_multicall: bool,
 }
 
 impl From<TypedData> for DisplayETHTypedData {
@@ -319,6 +323,11 @@ impl From<TypedData> for DisplayETHTypedData {
 
         let safe_tx_hash = message.get_safe_tx_hash();
 
+        let safe_tx_to = message.get_safe_tx_to();
+        let safe_tx_data = message.get_safe_tx_data();
+        let safe_tx_operation = message.get_safe_tx_operation();
+        let is_multicall = message.is_safe_multicall();
+
         Self {
             name: to_ptr_string(message.name),
             version: to_ptr_string(message.version),
@@ -331,6 +340,10 @@ impl From<TypedData> for DisplayETHTypedData {
             domain_hash: to_ptr_string(message.domain_separator),
             message_hash: to_ptr_string(message.message_hash),
             safe_tx_hash: to_ptr_string(safe_tx_hash),
+            safe_tx_to: to_ptr_string(safe_tx_to),
+            safe_tx_data: to_ptr_string(safe_tx_data),
+            safe_tx_operation,
+            is_multicall,
         }
     }
 }
@@ -350,6 +363,8 @@ impl Free for DisplayETHTypedData {
         free_str_ptr!(self.domain_hash);
         free_str_ptr!(self.message_hash);
         free_str_ptr!(self.safe_tx_hash);
+        free_str_ptr!(self.safe_tx_to);
+        free_str_ptr!(self.safe_tx_data);
     }
 }
 

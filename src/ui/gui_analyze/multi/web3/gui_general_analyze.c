@@ -127,6 +127,10 @@ GetObjStateFunc GuiOtherChainStateFuncGet(char *type)
         return GetEthEnsExist;
     } else if (!strcmp(type, "GetEthTypeDataHashExist")) {
         return GetEthTypeDataHashExist;
+    } else if (!strcmp(type, "GetEthTypeDataHashNotExist")) {
+        return GetEthTypeDataHashNotExist;
+    } else if (!strcmp(type, "GetEthSafeTxSigningEnabled")) {
+        return GetEthSafeTxSigningEnabled;
     } else if (!strcmp(type, "GetToEthEnsExist")) {
         return GetToEthEnsExist;
     } else if (!strcmp(type, "GetEthTypeDataChainExist")) {
@@ -350,6 +354,8 @@ static GetLabelDataLenFunc GuiEthTextLenFuncGet(char *type)
         return GetEthTypedDataMessageLen;
     } else if (!strcmp(type, "GetEthInputDataLen")) {
         return GetEthInputDataLen;
+    } else if (!strcmp(type, "GetEthSafeTxDataLen")) {
+        return GetEthSafeTxDataLen;
     }
     return NULL;
 }
@@ -589,6 +595,12 @@ static GetLabelDataFunc GuiEthTypedDataTextFuncGet(char *type)
         return GetEthTypedDataSafeTxHash;
     } else if (!strcmp(type, "GetEthTypedDataDomainHash")) {
         return GetEthTypedDataDomainHash;
+    } else if (!strcmp(type, "GetEthSafeTxTo")) {
+        return GetEthSafeTxTo;
+    } else if (!strcmp(type, "GetEthSafeTxValue")) {
+        return GetEthSafeTxValue;
+    } else if (!strcmp(type, "GetEthSafeTxData")) {
+        return GetEthSafeTxData;
     }
     return NULL;
 }
